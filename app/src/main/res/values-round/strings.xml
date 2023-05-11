@@ -1,0 +1,13 @@
+<resources>
+
+
+    <string name="open_onPhone">Open On Phone</string>
+    <string name="connect_TohalzaApp">Connect your Device with Halza App</string>
+    <string name="week_txt">Week</string>
+    <string name="fasting_txt">Fasting</string>
+    <string name="start_txt">Start</string>
+    <string name="end_txt">End</string>
+    <string name="edtit_txt">Edit</string>
+    <string name="next_fasting_txt">Next Fasting</string>
+
+</resources>
