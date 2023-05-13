@@ -2,7 +2,6 @@ package com.Halza.Master.presentation.viewmodel
 
 import android.annotation.SuppressLint
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.CountDownTimer
@@ -17,8 +16,7 @@ import androidx.wear.remote.interactions.RemoteActivityHelper
 import com.Halza.Master.R
 import com.Halza.Master.presentation.utils.MainDataState
 import com.Halza.Master.presentation.model.*
-import com.Halza.Master.presentation.service.IntermittentFastingApiService
-import com.Halza.Master.presentation.utils.Debounce
+import com.Halza.Master.presentation.service.IntermittentFastingRepository
 import com.Halza.Master.presentation.utils.NetworkUtil
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
@@ -73,6 +71,9 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     //Timer  object to start stop watch countup
     var timer: Timer = Timer()
 
+    //Repository
+    private val repository = IntermittentFastingRepository(context)
+
     // Register listen network state
     fun registerNetworkListener(): Unit {
         NetworkUtil.registerNetworkChange(context) { isAvailable, type ->
@@ -86,9 +87,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     fun getCurrentIntermettantEndFastingUserData(nodeId: String) {
         viewModelScope.launch {
 
-            val IntermittentFastingApiService = IntermittentFastingApiService.getInstance()
             try {
-                val response1 = IntermittentFastingApiService.GetCurrentFastingPlan(nodeId)
+                val response1 = repository.getCurrentFastingPlan(nodeId)
                 if (response1.code() == 200) {//user connected and have plan it will show fasting in progress
                     val response = response1.body() as CurrentCycleFastingData
 
@@ -129,9 +129,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     fun getCurrentIntermettantExpectedEndFasting(nodeId: String) {
         viewModelScope.launch {
 
-            val IntermittentFastingApiService = IntermittentFastingApiService.getInstance()
             try {
-                val response1 = IntermittentFastingApiService.GetCurrentFastingPlan(nodeId)
+                val response1 = repository.getCurrentFastingPlan(nodeId)
                 if (response1.code() == 200) {
                     val response = response1.body() as CurrentCycleFastingData
                     getFastingEndTime(response.expectedEndFasting)
@@ -298,7 +297,6 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         hour: Int, minut: Int, dayOfMonth: Int, monthofyear: Int, year: Int
     ) {
         viewModelScope.launch {
-            val IntermittentFastingApiService = IntermittentFastingApiService.getInstance()
             try {
 
                 val CurrentDateTime: LocalDateTime = LocalDateTime.of(
@@ -324,7 +322,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     newStartFasting = formattedString,
 
                     )
-                val response = IntermittentFastingApiService.updateTimeData(
+                val response = repository.updateTimeData(
                     bodyRequest, MyNodeId.value.toString()
                 )
                 if (response.isSuccessful) {
@@ -347,7 +345,6 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         hour: Int, minut: Int, dayofMonth: Int, monthofyear: Int, year: Int
     ) {
         viewModelScope.launch {
-            val IntermittentFastingApiService = IntermittentFastingApiService.getInstance()
             try {
 
                 val CurrentDateTime: LocalDateTime = LocalDateTime.of(
@@ -373,7 +370,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     newExEndFasting = formattedString,
 
                     )
-                val response = IntermittentFastingApiService.updateTimeData(
+                val response = repository.updateTimeData(
                     bodyRequest, MyNodeId.value.toString()
                 )
                 if (response.isSuccessful) {
@@ -393,7 +390,6 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     /*Start Fasting Fun*/
     fun startFasting() {
         viewModelScope.launch {
-            val IntermittentFastingApiService = IntermittentFastingApiService.getInstance()
             try {
                 state.value.editVisiable = true
                 _state.value = state.value.copy(Progress = 0.001f)
@@ -412,7 +408,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
                 state.value.startEndText = context.resources.getString(R.string.end_txt)
                 getCurrentFastingStartTime(formattedString)
-                val response = IntermittentFastingApiService.StartFasting(
+                val response = repository.startFasting(
                     bodyRequest, MyNodeId.value.toString()
                 )//Call Start Fasting Api
                 if (response.isSuccessful) {
@@ -454,7 +450,6 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     /*   //ُEnd Fasting Fun*/
     fun endFasting() {
         viewModelScope.launch {
-            val IntermittentFastingApiService = IntermittentFastingApiService.getInstance()
             try {
                 state.value.editVisiable = false //Update UI Disable Edit
                 _state.value = state.value.copy(Progress = 0.0f)//update Progress to 0
@@ -471,7 +466,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 val bodyRequest =
                     EndFastingRequestBody(endFasting = formattedString)//Body Request for End Fasting Call
 
-                val response = IntermittentFastingApiService.StopFasting(
+                val response = repository.stopFasting(
                     bodyRequest, MyNodeId.value.toString()
                 )//Call APi For Stop Fasting
                 if (response.isSuccessful) {
@@ -501,7 +496,6 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     /*Get History For User to Show Chart*/
     private fun getFastingHistory() {
         viewModelScope.launch {
-            val IntermittentFastingApiService = IntermittentFastingApiService.getInstance()
             try {
                 val todayDate: LocalDate = LocalDate.now()//Get Date For today To show 1 Wweek
                 val weekBeforeDate: LocalDate =
@@ -512,7 +506,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     state.value.fastingHistoryDataList[date.dayOfMonth.toString()] = 0f
 
                 }
-                val response = IntermittentFastingApiService.getFastingCycleHistory(
+                val response = repository.getFastingCycleHistory(
                     "1W", MyNodeId.value.toString()
                 )/*Get HOstory of Fasting*/
                 UserHistoryDataList = response
@@ -649,10 +643,9 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
         viewModelScope.launch {
 
-            val IntermittentFastingApiService = IntermittentFastingApiService.getInstance()
             try {
                 val response1 =
-                    IntermittentFastingApiService.getNextFastingData(MyNodeId.value.toString())
+                    repository.getNextFastingData(MyNodeId.value.toString())
                 if (response1.code() == 200) {
                     val response = response1.body() as NextDataResponse
                     if (isStartFasting) {
@@ -781,9 +774,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     fun GetPreviuosIntermedateFastingData(nodeId: String) {
         viewModelScope.launch {
 
-            val IntermedateFastingApi = IntermittentFastingApiService.getInstance()
             try {
-                val response1 = IntermedateFastingApi.GetPreviousFastingPlan(nodeId)
+                val response1 = repository.getPreviousFasting(nodeId)
                 if (response1.code() == 200) {
                     val response = response1.body() as PrevouisFastingData
                     val pattern = DateTimeFormatter.ISO_DATE_TIME
