@@ -24,13 +24,14 @@ class MainActivity : ComponentActivity() {
         super.onResume()
 
         // Register Network Listener
-        viewModel.registerNetworkListener(this)
+        viewModel.registerNetworkListener()
         //Get The device ID afor the Watch As it is the Node ID that connected with the pair Device
         viewModel.GetDeviceIdForWatch()
         //Observing (Waiting Value) the NodeId value from viewModel To get the Value and send the request to APi
         viewModel.MyNodeId.observe(this) { nodeId ->
             //Save Device Id(Node ID ) in local Storage taht allow to get it anyTime
-            val sharedPreference = getSharedPreferences(AppConstatnt.STORAGE_NAME, Context.MODE_PRIVATE)
+            val sharedPreference =
+                getSharedPreferences(AppConstatnt.STORAGE_NAME, Context.MODE_PRIVATE)
             var editor = sharedPreference.edit()
             editor.putString(AppConstatnt.NODE_ID, nodeId)
             editor.commit()
@@ -39,13 +40,12 @@ class MainActivity : ComponentActivity() {
         }
         setContent {//set-up the UI
             val state: MainDataState by viewModel.state.collectAsState()
-            MainApp(state, viewModel, CurrentCycleFastingData(),this)
+            MainApp(state, viewModel, CurrentCycleFastingData(), this)
 
 
         }
 
     }
-
 
 
 }

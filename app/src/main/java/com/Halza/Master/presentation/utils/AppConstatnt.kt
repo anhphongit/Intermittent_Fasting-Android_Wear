@@ -22,6 +22,15 @@ object AppConstatnt {
 
 }
 
+object AppKey {
+    // Pref storage
+    const val OUT_OF_SYNC_FASTING = "OutOfSyncFasting"
+    const val SHOWING_FASTING = "ShowingFasting"
+    const val CURRENT_FASTING = "CurrentFasting"
+    const val PREVIOUS_FASTING = "PreviousFasting"
+    const val HISTORY_FASTING = "HistoryHasting"
+}
+
 enum class NetworkType {
     Cellular, Wifi, NA
 }

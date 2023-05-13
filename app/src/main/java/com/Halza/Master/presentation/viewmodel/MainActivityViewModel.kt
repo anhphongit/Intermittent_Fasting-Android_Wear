@@ -74,7 +74,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     var timer: Timer = Timer()
 
     // Register listen network state
-    fun registerNetworkListener(context: Context): Unit {
+    fun registerNetworkListener(): Unit {
         NetworkUtil.registerNetworkChange(context) { isAvailable, type ->
             run {
                 Log.d("AnhPhong", "Network changed: isAvailable: $isAvailable, type: $type")
@@ -148,8 +148,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
     //Get Data for User Dosen't have any plan Before
     fun GetDefaultPageData() {
-        _state.value =
-            state.value.copy(fastingPeriod = "00" + ":00")
+        _state.value = state.value.copy(fastingPeriod = "00" + ":00")
         _state.value = state.value.copy(Progress = 0.0f)
         state.value.nextFastingTime = context.resources.getString(R.string.fasting_txt)
         state.value.startEndText = context.resources.getString(R.string.start_txt)
@@ -165,8 +164,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             try {
                 val thread = Thread {
                     try {
-                        var nodeListTask: Task<Node> =
-                            Wearable.getNodeClient(context).localNode
+                        var nodeListTask: Task<Node> = Wearable.getNodeClient(context).localNode
                         val node: Node = Tasks.await(nodeListTask)
                         MyNodeId.postValue(node.id)
 
@@ -212,28 +210,22 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 getFastingEndTime(currentPlanData.endFasting)//Convert the End fasting to binding on UI
 
                 formatter.withZone(ZoneId.systemDefault())
-                val startFastingDateTimeDatTime: LocalDateTime =
-                    LocalDateTime.parse(
-                        startFastingDateTime,
-                        formatter
-                    ) /*Get the Start Fasting time to calculate the Deffreance */
+                val startFastingDateTimeDatTime: LocalDateTime = LocalDateTime.parse(
+                    startFastingDateTime, formatter
+                ) /*Get the Start Fasting time to calculate the Deffreance */
                 val secondZdt = ZonedDateTime.of(
-                    startFastingDateTimeDatTime,
-                    ZoneId.of("UTC")
+                    startFastingDateTimeDatTime, ZoneId.of("UTC")
                 )
-                val zdtAtET = secondZdt
-                    .withZoneSameInstant(ZoneId.of("UTC"))
+                val zdtAtET = secondZdt.withZoneSameInstant(ZoneId.of("UTC"))
                     .withSecond(0) /*Convert Start fasting Time to UTC Zone*/
                 val current =
                     LocalDateTime.now(ZoneId.of("UTC"))/*Get The Current Time in UTC Zone to Get Right Deffrence  on all zones */
                 val firstZdt = ZonedDateTime.of(
-                    current,
-                    ZoneId.of("UTC")
+                    current, ZoneId.of("UTC")
                 )
                 val tempDateTime = LocalDateTime.from(zdtAtET)
                 val DiffinMillSeconds = tempDateTime.until(
-                    firstZdt,
-                    ChronoUnit.MILLIS
+                    firstZdt, ChronoUnit.MILLIS
                 )/*Calculate the Diffrence in MILISeconds*/
 
                 val fastingHoursinMilisconds =
@@ -254,16 +246,12 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
 
                     var timeInHHMMSS = java.lang.String.format(
-                        "%02d:%02d",
-                        hours,
-                        minutes
+                        "%02d:%02d", hours, minutes
                     )/*convert to string to update UI*/
-                    _state.value =
-                        state.value.copy(fastingPeriod = timeInHHMMSS)/*update UI*/
+                    _state.value = state.value.copy(fastingPeriod = timeInHHMMSS)/*update UI*/
                     _state.value = state.value.copy(Percntage = Percntage.toFloat())/*update UI*/
                     var progressValue: Double = (Percntage / 100).toDouble()/*update UI*/
-                    _state.value =
-                        state.value.copy(showingPercntage = false)/*update UI*/
+                    _state.value = state.value.copy(showingPercntage = false)/*update UI*/
                     state.value.Progress = progressValue.toFloat()
                     state.value.editVisiable = true/*update UI*/
                     state.value.NextFastingText =
@@ -275,8 +263,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
                 } else {/*in case User didn't start any cycle Yet but has plan Or */
                     endStopWtach()/*End Stopwatch to reset an */
-                    _state.value =
-                        state.value.copy(fastingPeriod = "00" + ":00")
+                    _state.value = state.value.copy(fastingPeriod = "00" + ":00")
                     _state.value = state.value.copy(Progress = 0.0f)
                     state.value.editVisiable = false
                     state.value.NextFastingText =
@@ -308,24 +295,15 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
     /*  //Update the start Time to (Edit start fasting Time)*/
     fun updateTimeDataStartFasting(
-        hour: Int,
-        minut: Int,
-        dayOfMonth: Int,
-        monthofyear: Int,
-        year: Int
+        hour: Int, minut: Int, dayOfMonth: Int, monthofyear: Int, year: Int
     ) {
         viewModelScope.launch {
             val IntermittentFastingApiService = IntermittentFastingApiService.getInstance()
             try {
 
-                val CurrentDateTime: LocalDateTime =
-                    LocalDateTime.of(
-                        year,
-                        monthofyear,
-                        dayOfMonth,
-                        hour,
-                        minut
-                    )// implementation details
+                val CurrentDateTime: LocalDateTime = LocalDateTime.of(
+                    year, monthofyear, dayOfMonth, hour, minut
+                )// implementation details
 
 
                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
@@ -337,8 +315,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     CurrentDateTime.atZone(zoneId) //Local time in Asia timezone
 
 
-                val zdtAtET = zdtAtAsia
-                    .withZoneSameInstant(ZoneId.of("UTC"))
+                val zdtAtET = zdtAtAsia.withZoneSameInstant(ZoneId.of("UTC"))
 
 
                 val formattedString = formatter.format(zdtAtET)
@@ -347,11 +324,9 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     newStartFasting = formattedString,
 
                     )
-                val response =
-                    IntermittentFastingApiService.updateTimeData(
-                        bodyRequest,
-                        MyNodeId.value.toString()
-                    )
+                val response = IntermittentFastingApiService.updateTimeData(
+                    bodyRequest, MyNodeId.value.toString()
+                )
                 if (response.isSuccessful) {
                     endStopWtach()
                     _state.value = MainDataState()
@@ -369,24 +344,15 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
     /*Update the End Time to (Edit End fasting Time)*/
     fun updateTimeDataEndFasting(
-        hour: Int,
-        minut: Int,
-        dayofMonth: Int,
-        monthofyear: Int,
-        year: Int
+        hour: Int, minut: Int, dayofMonth: Int, monthofyear: Int, year: Int
     ) {
         viewModelScope.launch {
             val IntermittentFastingApiService = IntermittentFastingApiService.getInstance()
             try {
 
-                val CurrentDateTime: LocalDateTime =
-                    LocalDateTime.of(
-                        year,
-                        monthofyear,
-                        dayofMonth,
-                        hour,
-                        minut
-                    )// implementation details
+                val CurrentDateTime: LocalDateTime = LocalDateTime.of(
+                    year, monthofyear, dayofMonth, hour, minut
+                )// implementation details
 
 
                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
@@ -398,8 +364,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     CurrentDateTime.atZone(zoneId) //Local time in Asia timezone
 
 
-                val zdtAtET = zdtAtAsia
-                    .withZoneSameInstant(ZoneId.of("UTC"))
+                val zdtAtET = zdtAtAsia.withZoneSameInstant(ZoneId.of("UTC"))
 
 
                 val formattedString = formatter.format(zdtAtET)
@@ -408,11 +373,9 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     newExEndFasting = formattedString,
 
                     )
-                val response =
-                    IntermittentFastingApiService.updateTimeData(
-                        bodyRequest,
-                        MyNodeId.value.toString()
-                    )
+                val response = IntermittentFastingApiService.updateTimeData(
+                    bodyRequest, MyNodeId.value.toString()
+                )
                 if (response.isSuccessful) {
                     _state.value = MainDataState()
                     getCurrentIntermettantEndFastingUserData(MyNodeId.value.toString())
@@ -449,14 +412,11 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
                 state.value.startEndText = context.resources.getString(R.string.end_txt)
                 getCurrentFastingStartTime(formattedString)
-                val response =
-                    IntermittentFastingApiService.StartFasting(
-                        bodyRequest,
-                        MyNodeId.value.toString()
-                    )//Call Start Fasting Api
+                val response = IntermittentFastingApiService.StartFasting(
+                    bodyRequest, MyNodeId.value.toString()
+                )//Call Start Fasting Api
                 if (response.isSuccessful) {
-                    _state.value =
-                        state.value.copy(showingPercntage = false)//Remove Percntage
+                    _state.value = state.value.copy(showingPercntage = false)//Remove Percntage
 
                     DownConterDuration =
                         currentPlanData.fastingHr.toLong() * 3600 * 1000/*Countdown Timer --Depercated AS the Logic Change */
@@ -511,18 +471,15 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 val bodyRequest =
                     EndFastingRequestBody(endFasting = formattedString)//Body Request for End Fasting Call
 
-                val response =
-                    IntermittentFastingApiService.StopFasting(
-                        bodyRequest,
-                        MyNodeId.value.toString()
-                    )//Call APi For Stop Fasting
+                val response = IntermittentFastingApiService.StopFasting(
+                    bodyRequest, MyNodeId.value.toString()
+                )//Call APi For Stop Fasting
                 if (response.isSuccessful) {
                     getNextFastingData(false)//Get Next Fasting Data
                     state.value.NextFastingText =
                         context.resources.getString(R.string.next_fasting_txt)//UPdate UI To Next Fasting
                     state.value.fastingPeriod = "00" + ":00"//Update UI For 0
-                    _state.value =
-                        state.value.copy(fastingPeriod = "00" + ":00") //Update UI For 0
+                    _state.value = state.value.copy(fastingPeriod = "00" + ":00") //Update UI For 0
                     _state.value = state.value.copy(Progress = 0.0f)//UPdate Progress
 
                     getFastingHistory()//Get History For Chart
@@ -530,8 +487,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
                 } else {//In Case Error From Call
 
-                    _state.value =
-                        state.value.copy(fastingPeriod = "00" + ":00")
+                    _state.value = state.value.copy(fastingPeriod = "00" + ":00")
                     _state.value = state.value.copy(Progress = 0.0f)
                 }
 
@@ -556,11 +512,9 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     state.value.fastingHistoryDataList[date.dayOfMonth.toString()] = 0f
 
                 }
-                val response =
-                    IntermittentFastingApiService.getFastingCycleHistory(
-                        "1W",
-                        MyNodeId.value.toString()
-                    )/*Get HOstory of Fasting*/
+                val response = IntermittentFastingApiService.getFastingCycleHistory(
+                    "1W", MyNodeId.value.toString()
+                )/*Get HOstory of Fasting*/
                 UserHistoryDataList = response
 
                 if (UserHistoryDataList.size > 0) {
@@ -603,8 +557,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 var seconds = TimeUnit.MILLISECONDS.toSeconds(TimerData) % 60
                 var timeInHHMMSS = java.lang.String.format("%02d:%02d", hours, minutes)
 
-                _state.value =
-                    state.value.copy(fastingPeriod = timeInHHMMSS)
+                _state.value = state.value.copy(fastingPeriod = timeInHHMMSS)
             }
         }
         timer.schedule(timertask, 0L, 1000L)
@@ -625,8 +578,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 var seconds = TimeUnit.MILLISECONDS.toSeconds(TimerData) % 60
                 var timeInHHMMSS = java.lang.String.format("%d:%02d", hours, minutes)
 
-                _state.value =
-                    state.value.copy(fastingPeriod = timeInHHMMSS)
+                _state.value = state.value.copy(fastingPeriod = timeInHHMMSS)
             }
 
 
@@ -655,8 +607,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         timertask?.cancel()
         timer?.cancel()
         state.value.fastingPeriod = "00" + ":00"
-        _state.value =
-            state.value.copy(fastingPeriod = "00" + ":00")
+        _state.value = state.value.copy(fastingPeriod = "00" + ":00")
         state.value.Progress = 0.0f
 
 
@@ -677,15 +628,12 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 localdatetime.atZone(zoneId) //Local time in Asia timezone
 
 
-            val zdtAtET = zdtAtAsia
-                .withZoneSameInstant(ZoneId.systemDefault())
+            val zdtAtET = zdtAtAsia.withZoneSameInstant(ZoneId.systemDefault())
 
             val formatter = DateTimeFormatter.ofPattern("h:mm a")
             val output = formatter.format(zdtAtET)
-            _state.value =
-                state.value.copy(showingPercntage = false)
-            _state.value =
-                state.value.copy(nextFastingTime = output.toString())
+            _state.value = state.value.copy(showingPercntage = false)
+            _state.value = state.value.copy(nextFastingTime = output.toString())
             state.value.nextFastingTime = output.toString()
 
 
@@ -750,8 +698,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 localdatetime.atZone(zoneId) //Local time in Asia timezone
 
 
-            val zdtAtET = zdtAtAsia
-                .withZoneSameInstant(ZoneId.systemDefault())
+            val zdtAtET = zdtAtAsia.withZoneSameInstant(ZoneId.systemDefault())
 
 
             val formatter = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)
@@ -791,12 +738,11 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             val localdatetime: LocalDateTime = LocalDateTime.parse(date, pattern)
             val zoneId: ZoneId = ZoneId.of("UTC") //Convert to UTC Zone information
 
-            val zdtAtAsia: ZonedDateTime =
-                localdatetime.atZone(zoneId) // time in  timezone
+            val zdtAtAsia: ZonedDateTime = localdatetime.atZone(zoneId) // time in  timezone
 
 
-            val zdtAtET = zdtAtAsia
-                .withZoneSameInstant(ZoneId.systemDefault())//Convert to Devic eTime Zone
+            val zdtAtET =
+                zdtAtAsia.withZoneSameInstant(ZoneId.systemDefault())//Convert to Devic eTime Zone
             _state.value = state.value.copy(
                 startFastingTime = zdtAtET.toLocalDateTime(),
 
@@ -828,8 +774,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             Intent(Intent.ACTION_VIEW).apply {
                 addCategory(Intent.CATEGORY_BROWSABLE)
                 data = Uri.parse(verificationUri)
-            },
-            null
+            }, null
         )
     }
 
@@ -851,8 +796,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                         localdatetime.atZone(zoneId) //Local time in Asia timezone
 
 
-                    val zdtAtET = zdtAtAsia
-                        .withZoneSameInstant(ZoneId.systemDefault())
+                    val zdtAtET = zdtAtAsia.withZoneSameInstant(ZoneId.systemDefault())
                     _state.value =
                         state.value.copy(PreviuosEndFastingTime = zdtAtET.toLocalDateTime())
                 }
