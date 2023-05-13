@@ -16,11 +16,15 @@ import com.Halza.Master.presentation.utils.AppConstatnt
 import com.Halza.Master.presentation.viewmodel.MainActivityViewModel
 import com.Halza.Master.presentation.utils.MainDataState
 import com.Halza.Master.presentation.model.CurrentCycleFastingData
+import com.Halza.Master.presentation.utils.NetworkUtil
 
 class MainActivity : ComponentActivity() {
     val viewModel by viewModels<MainActivityViewModel>()
     override fun onResume() {
         super.onResume()
+
+        // Register Network Listener
+        viewModel.registerNetworkListener(this)
         //Get The device ID afor the Watch As it is the Node ID that connected with the pair Device
         viewModel.GetDeviceIdForWatch()
         //Observing (Waiting Value) the NodeId value from viewModel To get the Value and send the request to APi

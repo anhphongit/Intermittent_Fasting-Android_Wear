@@ -2,9 +2,11 @@ package com.Halza.Master.presentation.viewmodel
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.CountDownTimer
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -16,6 +18,8 @@ import com.Halza.Master.R
 import com.Halza.Master.presentation.utils.MainDataState
 import com.Halza.Master.presentation.model.*
 import com.Halza.Master.presentation.service.IntermittentFastingApiService
+import com.Halza.Master.presentation.utils.Debounce
+import com.Halza.Master.presentation.utils.NetworkUtil
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.Node
@@ -68,6 +72,15 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
     //Timer  object to start stop watch countup
     var timer: Timer = Timer()
+
+    // Register listen network state
+    fun registerNetworkListener(context: Context): Unit {
+        NetworkUtil.registerNetworkChange(context) { isAvailable, type ->
+            run {
+                Log.d("AnhPhong", "Network changed: isAvailable: $isAvailable, type: $type")
+            }
+        }
+    }
 
     //Get Current Data (Records) Cycle /Fasting For User
     fun getCurrentIntermettantEndFastingUserData(nodeId: String) {
@@ -294,13 +307,25 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     }
 
     /*  //Update the start Time to (Edit start fasting Time)*/
-    fun updateTimeDataStartFasting(hour: Int, minut: Int,dayOfMonth :Int,monthofyear:Int,year:Int) {
+    fun updateTimeDataStartFasting(
+        hour: Int,
+        minut: Int,
+        dayOfMonth: Int,
+        monthofyear: Int,
+        year: Int
+    ) {
         viewModelScope.launch {
             val IntermittentFastingApiService = IntermittentFastingApiService.getInstance()
             try {
 
                 val CurrentDateTime: LocalDateTime =
-                    LocalDateTime.of(year,monthofyear,dayOfMonth,hour,minut)// implementation details
+                    LocalDateTime.of(
+                        year,
+                        monthofyear,
+                        dayOfMonth,
+                        hour,
+                        minut
+                    )// implementation details
 
 
                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
@@ -343,13 +368,25 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     }
 
     /*Update the End Time to (Edit End fasting Time)*/
-    fun updateTimeDataEndFasting(hour: Int, minut: Int,dayofMonth:Int,monthofyear:Int,year:Int) {
+    fun updateTimeDataEndFasting(
+        hour: Int,
+        minut: Int,
+        dayofMonth: Int,
+        monthofyear: Int,
+        year: Int
+    ) {
         viewModelScope.launch {
             val IntermittentFastingApiService = IntermittentFastingApiService.getInstance()
             try {
 
                 val CurrentDateTime: LocalDateTime =
-                    LocalDateTime.of(year,monthofyear,dayofMonth,hour,minut)// implementation details
+                    LocalDateTime.of(
+                        year,
+                        monthofyear,
+                        dayofMonth,
+                        hour,
+                        minut
+                    )// implementation details
 
 
                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
@@ -795,6 +832,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             null
         )
     }
+
     fun GetPreviuosIntermedateFastingData(nodeId: String) {
         viewModelScope.launch {
 
@@ -815,7 +853,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
                     val zdtAtET = zdtAtAsia
                         .withZoneSameInstant(ZoneId.systemDefault())
-                    _state.value = state.value.copy(PreviuosEndFastingTime = zdtAtET.toLocalDateTime())
+                    _state.value =
+                        state.value.copy(PreviuosEndFastingTime = zdtAtET.toLocalDateTime())
                 }
 
             } catch (e: Exception) {
