@@ -21,3 +21,7 @@ object AppConstatnt {
     const val PERIOD = "period"//period to pass for url as query parameter
 
 }
+
+enum class NetworkType {
+    Cellular, Wifi, NA
+}
