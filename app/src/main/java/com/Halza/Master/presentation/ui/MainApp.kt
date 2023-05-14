@@ -37,7 +37,10 @@ import com.Halza.Master.presentation.model.CurrentCycleFastingData
 import com.Halza.Master.presentation.theme.HalzaTheme
 import com.Halza.Master.presentation.customcomponent.Chart
 import com.Halza.Master.presentation.customcomponent.CustomCircularProgressIndicator
+import com.Halza.Master.presentation.customcomponent.GlobalDialogProvider
+import com.Halza.Master.presentation.customcomponent.LostNetworkDialog
 import com.Halza.Master.presentation.customcomponent.RangeTimePickerDialog
+import com.Halza.Master.presentation.utils.GlobalDialogUtil
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -87,124 +90,132 @@ fun MainApp(
             ) {
 
 
-            ScalingLazyColumn(
+            GlobalDialogProvider(
                 modifier = Modifier.fillMaxSize(1f),
-                contentPadding = PaddingValues(0.dp),
-                state = listState,
-                autoCentering = false,
+                viewModel = GlobalDialogUtil.getInstance().getViewModel()
+            ) {
+                ScalingLazyColumn(
+                    modifier = Modifier.fillMaxSize(1f),
+                    contentPadding = PaddingValues(0.dp),
+                    state = listState,
+                    autoCentering = null,
 
 
-                ) {
+                    ) {
+                    //main Page Item for Exsiting User and New User
+                    if (state.userHasConnected) {
+
+                        item {
+                            Box(modifier = Modifier.fillParentMaxSize()) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(1f)
+                                        .background(MaterialTheme.colors.background),
 
 
-//main Page Item for Exsiting User and New User
-                if (state.userHasConnected) {
+                                    ) {
 
-                    item {
-                        Box(modifier = Modifier.fillParentMaxSize()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(1f)
-                                    .background(MaterialTheme.colors.background),
+                                    ShowBigProgress(
+                                        TargetValueProgress,
+                                        contentModifier,
+                                        iconModifier,
+                                        currentData,
+                                        state,
+                                        viewModel
+                                    )
+                                    ShowProgress()
 
-
-                                ) {
-
-                                ShowBigProgress(
-                                    TargetValueProgress,
-                                    contentModifier,
-                                    iconModifier,
-                                    currentData,
-                                    state,
-                                    viewModel
-                                )
-                                ShowProgress()
-
+                                }
                             }
                         }
-                    }
-                    item { Spacer(modifier = Modifier.height(20.dp)) }
+                        item { Spacer(modifier = Modifier.height(20.dp)) }
 
-                    item { Spacer(modifier = Modifier.height(20.dp)) }
-                    item {
-                        Box(modifier = Modifier.fillMaxWidth()) {
+                        item { Spacer(modifier = Modifier.height(20.dp)) }
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth()) {
 
-                            Column(
-                                modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.Center,
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.Center,
 
-                                ) {
+                                    ) {
 
 
-                                FastingText(contentModifier, state)
-                                LastFastingStartTimeText(
-                                    contentModifier,
-                                    state.FastingStartTime,
-                                    state,
-                                    contxt,
-                                    viewModel
-                                ) {
+                                    FastingText(contentModifier, state)
+                                    LastFastingStartTimeText(
+                                        contentModifier,
+                                        state.FastingStartTime,
+                                        state,
+                                        contxt,
+                                        viewModel
+                                    ) {
+
+                                    }
+                                    ShowDivider(contentModifier)
+                                    LastFastingEndTimeText(
+                                        contentModifier,
+                                        state.FastingEndTime,
+                                        state,
+                                        contxt,
+                                        viewModel
+                                    ) {
+
+
+                                    }
+
 
                                 }
-                                ShowDivider(contentModifier)
-                                LastFastingEndTimeText(
-                                    contentModifier, state.FastingEndTime, state, contxt, viewModel
-                                ) {
-
-
-                                }
-
-
-                            }
 //
 
+                            }
                         }
-                    }
-                    item { Spacer(modifier = Modifier.height(20.dp)) }
-                    item {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            ShowChart(iconModifier, state, viewModel)
-
-                        }
-
-
-                    }
-                }
-                //if user not connected with halza App
-                else {
-                    item {
-                        Box(modifier = Modifier.fillParentMaxSize()) {
-
+                        item { Spacer(modifier = Modifier.height(20.dp)) }
+                        item {
                             Column(
                                 modifier = Modifier.fillMaxSize(),
                                 verticalArrangement = Arrangement.Center,
-
-
-                                ) {
-
-                                openAppText(contentModifier)
-                                openOnPhoneButton(viewModel = viewModel, false)
-
+                            ) {
+                                ShowChart(iconModifier, state, viewModel)
 
                             }
+
+
                         }
+                    }
+                    //if user not connected with halza App
+                    else {
+                        item {
+                            Box(modifier = Modifier.fillParentMaxSize()) {
+
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.Center,
+
+
+                                    ) {
+
+                                    openAppText(contentModifier)
+                                    openOnPhoneButton(viewModel = viewModel, false)
+
+
+                                }
+                            }
+                        }
+
+
                     }
 
 
+
+
+
+
+                    coroutineScope.launch {
+                        // Animate scroll to the 10th item
+                        listState.scrollToItem(index = 0)
+                    }
                 }
 
-
-
-
-
-
-                coroutineScope.launch {
-                    // Animate scroll to the 10th item
-                    listState.scrollToItem(index = 0)
-                }
             }
 
 

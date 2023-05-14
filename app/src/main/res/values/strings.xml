@@ -15,5 +15,7 @@
     <string name="next_fasting_txt">Next Fasting</string>
     <string name="end_fasting">End Fasting On</string>
     <string name="start_fasting">Start Fasting On</string>
+    <string name="your_devices_is_offline">Your devices is offline</string>
+    <string name="all_updates_will_be_temporarily_stored_locally_please_connect_to_the_internet_for_the_new_data_synchronous_">All updates will be temporarily stored locally. Please connect to the internet for new data synchronous.</string>
 
 </resources>
