@@ -6,6 +6,7 @@ import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.dialog.Alert
+import com.Halza.Master.presentation.customcomponent.ConflictFastingDataDialog
 import com.Halza.Master.presentation.customcomponent.LostNetworkDialog
 import com.Halza.Master.presentation.viewmodel.GlobalDialogViewModel
 
@@ -35,5 +36,19 @@ class GlobalDialogUtil private constructor() {
         viewModel.showDialog({
             LostNetworkDialog { viewModel.hideDialog() }
         })
+    }
+
+    fun showConflictFastingDataDialog(
+        onAccept: () -> Unit, onRefuse: () -> Unit
+    ): Unit {
+        viewModel.showDialog({
+            ConflictFastingDataDialog({
+                onAccept()
+                viewModel.hideDialog()
+            }, {
+                onRefuse()
+                viewModel.hideDialog()
+            })
+        }, false)
     }
 }
