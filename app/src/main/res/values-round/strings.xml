@@ -11,5 +11,6 @@
     <string name="next_fasting_txt">Next Fasting</string>
     <string name="your_devices_is_offline">Your devices is offline</string>
     <string name="all_updates_will_be_temporarily_stored_locally_please_connect_to_the_internet_for_the_new_data_synchronous_">All updates will be temporarily stored locally. Please connect to the internet for new data synchronous.</string>
+    <string name="there_is_an_update_on_your_phone_do_you_want_to_override_it_">There is an update on your phone. do you want to override it?</string>
 
 </resources>
