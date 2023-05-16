@@ -35,9 +35,22 @@ class NetworkUtil {
             })
         }
 
+        fun checkNetworkConnection(context: Context): Boolean {
+            val connectivityManager = getSystemService(context, ConnectivityManager::class.java)
+
+            val capabilities =
+                connectivityManager?.getNetworkCapabilities(connectivityManager.activeNetwork)
+            if (capabilities != null) {
+                return detectNetworkCapability(capabilities) != NetworkType.NA
+            }
+
+            return false
+        }
+
         private fun detectNetworkCapability(networkCapabilities: NetworkCapabilities): NetworkType {
             if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
                 || networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
+                || networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
             ) {
                 return NetworkType.Wifi
             }

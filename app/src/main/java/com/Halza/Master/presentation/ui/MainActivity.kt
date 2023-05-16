@@ -15,7 +15,7 @@ import androidx.compose.runtime.getValue
 import com.Halza.Master.presentation.utils.AppConstatnt
 import com.Halza.Master.presentation.viewmodel.MainActivityViewModel
 import com.Halza.Master.presentation.utils.MainDataState
-import com.Halza.Master.presentation.model.CurrentCycleFastingData
+import com.Halza.Master.presentation.model.FastingData
 import com.Halza.Master.presentation.utils.NetworkUtil
 
 class MainActivity : ComponentActivity() {
@@ -23,6 +23,8 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
 
+        // Initialize
+        viewModel.init()
         // Register Network Listener
         viewModel.registerNetworkListener()
         //Get The device ID afor the Watch As it is the Node ID that connected with the pair Device
@@ -40,7 +42,7 @@ class MainActivity : ComponentActivity() {
         }
         setContent {//set-up the UI
             val state: MainDataState by viewModel.state.collectAsState()
-            MainApp(state, viewModel, CurrentCycleFastingData(), this)
+            MainApp(state, viewModel, FastingData(), this)
 
 
         }

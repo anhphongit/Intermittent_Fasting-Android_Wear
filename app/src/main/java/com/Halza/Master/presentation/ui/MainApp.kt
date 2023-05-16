@@ -33,7 +33,7 @@ import com.Halza.Master.BuildConfig
 import com.Halza.Master.R
 import com.Halza.Master.presentation.viewmodel.MainActivityViewModel
 import com.Halza.Master.presentation.utils.MainDataState
-import com.Halza.Master.presentation.model.CurrentCycleFastingData
+import com.Halza.Master.presentation.model.FastingData
 import com.Halza.Master.presentation.theme.HalzaTheme
 import com.Halza.Master.presentation.customcomponent.Chart
 import com.Halza.Master.presentation.customcomponent.CustomCircularProgressIndicator
@@ -54,7 +54,7 @@ import java.util.*
 fun MainApp(
     state: MainDataState,
     viewModel: MainActivityViewModel,
-    currentData: CurrentCycleFastingData = CurrentCycleFastingData(),
+    currentData: FastingData = FastingData(),
     contxt: Context
 ) {
     HalzaTheme {
@@ -480,7 +480,7 @@ fun LastFastingStartTimeText(
     val mHour = CurrentDateTime.hour
     val mMinute = CurrentDateTime.minute
     // Fetching current year, month and day
-    val mYear = mCalendar.get(Calendar.YEAR)
+    val mYear = CurrentDateTime.year
     val mMonth = CurrentDateTime.monthValue
     val mDay = CurrentDateTime.dayOfMonth
     val CurrentDateTime1: LocalDateTime = LocalDateTime.now(ZoneId.systemDefault())
@@ -947,7 +947,7 @@ fun ShowBigProgress(
     indicatorProgress: Float,
     modifier: Modifier = Modifier,
     iconModifier: Modifier = Modifier,
-    currentData: CurrentCycleFastingData,
+    currentData: FastingData,
     state: MainDataState,
     viewModel: MainActivityViewModel
 ) {
