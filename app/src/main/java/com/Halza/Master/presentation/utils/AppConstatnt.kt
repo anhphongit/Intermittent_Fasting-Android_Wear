@@ -19,7 +19,7 @@ object AppConstatnt {
     const val UPDATE_TIME_FASTING = "Fasting"//edit start and end fasting
     const val DEVICE_ID = "deviceId"//Deviuce id to pass for url as query parameter
     const val PERIOD = "period"//period to pass for url as query parameter
-
+    const val FASTING_PERIOD_LIMITATION = 86400000 // 24 hours in Milliseconds
 }
 
 object AppKey {

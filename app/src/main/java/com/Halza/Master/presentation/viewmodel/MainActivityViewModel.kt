@@ -18,6 +18,7 @@ import com.Halza.Master.presentation.utils.MainDataState
 import com.Halza.Master.presentation.model.*
 import com.Halza.Master.presentation.service.IntermittentFastingRepository
 import com.Halza.Master.presentation.service.SharedPreferencesService
+import com.Halza.Master.presentation.utils.AppConstatnt
 import com.Halza.Master.presentation.utils.CommonUtil
 import com.Halza.Master.presentation.utils.Debounce
 import com.Halza.Master.presentation.utils.GlobalDialogUtil
@@ -186,6 +187,12 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             } catch (e: Exception) {
                 errorMessage = e.message.toString()
             }
+        }
+    }
+
+    fun checkIfMeetFastingLimitation(totalFastingDuration: Long) {
+        if (totalFastingDuration > AppConstatnt.FASTING_PERIOD_LIMITATION) {
+            endFasting()
         }
     }
 
@@ -605,14 +612,13 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 num += 1000L
                 TimerData = num
                 var hours = TimeUnit.MILLISECONDS.toHours(TimerData)
-
                 var minutes = TimeUnit.MILLISECONDS.toMinutes(TimerData) % 60
-
-
                 var seconds = TimeUnit.MILLISECONDS.toSeconds(TimerData) % 60
                 var timeInHHMMSS = java.lang.String.format("%02d:%02d", hours, minutes)
 
                 _state.value = state.value.copy(fastingPeriod = timeInHHMMSS)
+
+                checkIfMeetFastingLimitation(TimerData)
             }
         }
         timer.schedule(timertask, 0L, 1000L)
