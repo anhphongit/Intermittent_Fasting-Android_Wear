@@ -14,10 +14,10 @@ import java.util.concurrent.TimeUnit
 interface IntermittentFastingApiService {
     /*Get Current Cycle For User*/
     @GET(AppConstatnt.CURRENT_FASTING_CYCLE)
-    suspend fun GetCurrentFastingPlan(@Query(AppConstatnt.DEVICE_ID) deviceId: String): Response<CurrentCycleFastingData>
+    suspend fun GetCurrentFastingPlan(@Query(AppConstatnt.DEVICE_ID) deviceId: String): Response<FastingData>
     /*Get Previouse Cycle For User*/
     @GET(AppConstatnt.PREVIOUSE_FASTING_CYCLE)
-    suspend fun GetPreviousFastingPlan(@Query(AppConstatnt.DEVICE_ID) deviceId: String): Response<PrevouisFastingData>
+    suspend fun GetPreviousFastingPlan(@Query(AppConstatnt.DEVICE_ID) deviceId: String): Response<PreviousFastingDataResponse>
     /*Start Fasting*/
     @POST(AppConstatnt.START_FASTING)
     suspend fun StartFasting(
@@ -37,7 +37,7 @@ interface IntermittentFastingApiService {
     suspend fun getFastingCycleHistory(
         @Query(AppConstatnt.PERIOD) period: String,
         @Query(AppConstatnt.DEVICE_ID) deviceId: String
-    ): List<CurrentCycleFastingData>
+    ): Response<List<FastingData>>
 
     /*Get Next Fasting Time*/
     @GET(AppConstatnt.NEXT_FASTING)
@@ -46,7 +46,7 @@ interface IntermittentFastingApiService {
     @PUT(AppConstatnt.UPDATE_TIME_FASTING)
     suspend fun updateTimeData(
         @Body updateTimeDataRequest: UpdateTimeDataRequest,
-        @Query(AppConstatnt.DEVICE_ID) deviceId: String
+        @Query(AppConstatnt.DEVICE_ID) deviceId: String,
     ): Response<Void>
 
     //Setup the Retrofit Singlton Class baseurl and retrofit service httpclient

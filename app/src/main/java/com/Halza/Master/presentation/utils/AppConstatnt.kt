@@ -28,7 +28,8 @@ object AppKey {
     const val SHOWING_FASTING = "ShowingFasting"
     const val CURRENT_FASTING = "CurrentFasting"
     const val PREVIOUS_FASTING = "PreviousFasting"
-    const val HISTORY_FASTING = "HistoryHasting"
+    const val NEXT_FASTING = "NextFasting"
+    const val HISTORY_FASTING = "HistoryFasting"
 }
 
 enum class NetworkType {
