@@ -5,13 +5,18 @@ import java.util.TimerTask
 
 
 class Debounce(private val delayInMillisecond: Long) {
-    private val timer = Timer()
+    private var timer :Timer? = null
     private var timerTask: ActionTimerTask? = null
 
     fun doAction(action: () -> Unit): Unit {
-        timerTask?.cancel();
+        // Stop Current Task
+        timerTask?.cancel()
+        timer?.cancel()
+
+        // Start new task
+        timer = Timer()
         timerTask = ActionTimerTask(action)
-        timer.schedule(timerTask, delayInMillisecond)
+        timer?.schedule(timerTask, delayInMillisecond)
     }
 }
 
