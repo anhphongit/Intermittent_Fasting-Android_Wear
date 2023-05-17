@@ -4,6 +4,7 @@ package com.Halza.Master.presentation.ui
 import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.content.Context
+import android.content.res.Resources
 import android.os.Build
 import android.widget.DatePicker
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -37,9 +38,11 @@ import com.Halza.Master.presentation.model.FastingData
 import com.Halza.Master.presentation.theme.HalzaTheme
 import com.Halza.Master.presentation.customcomponent.Chart
 import com.Halza.Master.presentation.customcomponent.CustomCircularProgressIndicator
+import com.Halza.Master.presentation.customcomponent.DateTimePickerDialog
 import com.Halza.Master.presentation.customcomponent.GlobalDialogProvider
 import com.Halza.Master.presentation.customcomponent.LostNetworkDialog
 import com.Halza.Master.presentation.customcomponent.RangeTimePickerDialog
+import com.Halza.Master.presentation.utils.CommonUtil
 import com.Halza.Master.presentation.utils.GlobalDialogUtil
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -148,9 +151,7 @@ fun MainApp(
                                         state,
                                         contxt,
                                         viewModel
-                                    ) {
-
-                                    }
+                                    )
                                     ShowDivider(contentModifier)
                                     LastFastingEndTimeText(
                                         contentModifier,
@@ -158,12 +159,7 @@ fun MainApp(
                                         state,
                                         contxt,
                                         viewModel
-                                    ) {
-
-
-                                    }
-
-
+                                    )
                                 }
 //
 
@@ -460,237 +456,51 @@ fun LastFastingStartTimeText(
     startFastingTime: String,
     state: MainDataState,
     context: Context,
-    viewModel: MainActivityViewModel,
-    onStartfastingClickButton: () -> Unit
+    viewModel: MainActivityViewModel
 ) {
-    // Declaring and initializing a calendar
-    var mCalendar = Calendar.getInstance()
-    var dayofMonth by remember {
-        mutableStateOf(0)
-    }
-    var MonthOfyear by remember {
-        mutableStateOf(0)
-    }
-    var year by remember {
-        mutableStateOf(0)
-    }
-//    val mHour = mCalendar[Calendar.HOUR_OF_DAY]
-//    val mMinute = mCalendar[Calendar.MINUTE]
-    val CurrentDateTime: LocalDateTime = LocalDateTime.now(ZoneId.systemDefault())
-    val mHour = CurrentDateTime.hour
-    val mMinute = CurrentDateTime.minute
-    // Fetching current year, month and day
-    val mYear = CurrentDateTime.year
-    val mMonth = CurrentDateTime.monthValue
-    val mDay = CurrentDateTime.dayOfMonth
-    val CurrentDateTime1: LocalDateTime = LocalDateTime.now(ZoneId.systemDefault())
+    val showingFastingData = viewModel.getShowingFasting()
+    val previousFastingData = viewModel.getPreviousFasting()
 
-    val zonedDateTime: ZonedDateTime = ZonedDateTime.of(CurrentDateTime1, ZoneId.systemDefault())
+    val pickingDateTime = CommonUtil.parseDateTime(showingFastingData.startFasting!!)!!
+    val minDateTime =
+        if (previousFastingData?.endFasting != null) CommonUtil.parseDateTime(previousFastingData.endFasting) else null
+    val maxDateTime = CommonUtil.today()
+    val pickerTitle = stringResource(id = R.string.start_fasting)
 
-    val date: Long = zonedDateTime.toInstant().toEpochMilli()
-    val zonedDateTime1: ZonedDateTime = ZonedDateTime.of(CurrentDateTime, ZoneId.systemDefault())
-    val date1: Long = zonedDateTime1.toInstant().toEpochMilli()
-    mCalendar.time = Date()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(PaddingValues(top = 8.dp)),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Text(
 
-    // Value for storing time as a string
-    val mNewStartFastingTimeTime = remember {
-        mutableStateOf("")
-    }
-    var mTimePickerDialog: RangeTimePickerDialog
-    if (Build.VERSION.SDK_INT == Build.VERSION_CODES.P) {
-
-        // Creating a TimePicker dialod
-        mTimePickerDialog = RangeTimePickerDialog(
-            context, R.style.CustomDatePickerDialog1, { _, mHour: Int, mMinute: Int ->
-                mNewStartFastingTimeTime.value = "$mHour:$mMinute"
-                viewModel.updateTimeDataStartFasting(mHour, mMinute, dayofMonth, MonthOfyear, year)
-            }, mHour, mMinute, false
-        )
-
-        // initial values as current values (present year, month and day)
-        val mDatePickerDialog = DatePickerDialog(
-            context,
-            R.style.CustomDatePickerDialog12,
-            { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
-                dayofMonth = mDayOfMonth
-                MonthOfyear = mMonth + 1
-                year = mYear
-                dayofMonth = mDayOfMonth
-                MonthOfyear = mMonth + 1
-                year = mYear
-                val CurrentDateTime23: LocalDateTime = LocalDateTime.now(ZoneId.systemDefault())
-                if ((CurrentDateTime23.dayOfMonth - dayofMonth) < 0) {
-
-                    mTimePickerDialog.setMax(25, 25)
-                } else if (CurrentDateTime23.dayOfMonth == dayofMonth) {
-                    mTimePickerDialog.setMax(mHour, mMinute)
-                } else if (dayofMonth == state.PreviuosEndFastingTime.dayOfMonth) {
-                    mTimePickerDialog.updateValue(
-                        state.PreviuosEndFastingTime.hour, state.PreviuosEndFastingTime.minute.inc()
-                    )
-                    mTimePickerDialog.setMin(
-                        state.PreviuosEndFastingTime.hour, state.PreviuosEndFastingTime.minute.inc()
-                    )
-                } else {
-                    mTimePickerDialog.setMax(25, 25)
-
-                }
-
-                mTimePickerDialog.show()
-            },
-            mYear,
-            mMonth,
-            mDay
-        )
-        if (state.NewUser) {
-
-            mDatePickerDialog.getDatePicker().setMinDate(date1);
-            mDatePickerDialog.getDatePicker().setMaxDate(date);
-        } else {
-            val zonedDateTime3: ZonedDateTime =
-                ZonedDateTime.of(state.PreviuosEndFastingTime, ZoneId.systemDefault())
-            val date3: Long = zonedDateTime3.toInstant().toEpochMilli()
-            mDatePickerDialog.getDatePicker().setMinDate(date3);
-            mDatePickerDialog.getDatePicker().setMaxDate(date);
-
-        }
-
-        mDatePickerDialog.setTitle(stringResource(id = R.string.start_fasting))
-
-        mTimePickerDialog.setTitle(stringResource(id = R.string.start_fasting))
-
-        Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(PaddingValues(top = 8.dp)),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-
-                modifier = Modifier
-                    .width(90.dp)
-                    .height(30.dp),
-                textAlign = TextAlign.Center,
-                text = startFastingTime,
-                color = MaterialTheme.colors.primary,
-                fontSize = 20.sp
-            )
-            if (state.editVisiable) {
-                IconButton(modifier = Modifier.size(24.dp), onClick = {
-//                        if(mTimePickerDialog.isShowing){
-//                            mTimePickerDialog.dismiss()
-//
-//                        }
-//                        mTimePickerDialog.show()
-                    mDatePickerDialog.show()
-                    onStartfastingClickButton
-                }) {
-                    Icon(
-                        Icons.Filled.Edit,
-                        "contentDescription",
-                    )
-                }
+                .width(90.dp)
+                .height(30.dp),
+            textAlign = TextAlign.Center,
+            text = startFastingTime,
+            color = MaterialTheme.colors.primary,
+            fontSize = 20.sp
+        )
+        if (state.editVisiable) {
+            IconButton(modifier = Modifier.size(24.dp), onClick = {
+                DateTimePickerDialog.Builder(context, pickingDateTime)
+                    .title(pickerTitle)
+                    .minDate(minDateTime)
+                    .maxDate(maxDateTime)
+                    .onPickComplete { res ->
+                        viewModel.updateTimeDataStartFasting(
+                            CommonUtil.dateTimeToISOString(res)
+                        )
+                    }.show()
+            }) {
+                Icon(
+                    Icons.Filled.Edit,
+                    "contentDescription",
+                )
             }
         }
-    } else {
-        // Creating a TimePicker dialod
-        mTimePickerDialog = RangeTimePickerDialog(
-            context, R.style.CustomDatePickerDialog, { _, mHour: Int, mMinute: Int ->
-                mNewStartFastingTimeTime.value = "$mHour:$mMinute"
-                viewModel.updateTimeDataStartFasting(mHour, mMinute, dayofMonth, MonthOfyear, year)
-            }, mHour, mMinute, false
-        )
-        // initial values as current values (present year, month and day)
-        val mDatePickerDialog = DatePickerDialog(
-            context,
-            R.style.CustomDatePickerDialog,
-            { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
-                dayofMonth = mDayOfMonth
-                MonthOfyear = mMonth + 1
-                year = mYear
-                val CurrentDateTime23: LocalDateTime = LocalDateTime.now(ZoneId.systemDefault())
-                if ((CurrentDateTime23.dayOfMonth - dayofMonth) < 0) {
-                    if (dayofMonth == state.PreviuosEndFastingTime.dayOfMonth) {
-                        mTimePickerDialog.updateValue(
-                            state.PreviuosEndFastingTime.hour,
-                            state.PreviuosEndFastingTime.minute.inc()
-                        )
-                        mTimePickerDialog.setMin(
-                            state.PreviuosEndFastingTime.hour,
-                            state.PreviuosEndFastingTime.minute.inc()
-                        )
-                    } else {
-                        mTimePickerDialog.setMax(25, 25)
-                    }
-
-                } else if (CurrentDateTime23.dayOfMonth == dayofMonth) {
-                    mTimePickerDialog.setMax(mHour, mMinute)
-                } else if (dayofMonth == state.PreviuosEndFastingTime.dayOfMonth) {
-                    mTimePickerDialog.updateValue(
-                        state.PreviuosEndFastingTime.hour, state.PreviuosEndFastingTime.minute.inc()
-                    )
-                    mTimePickerDialog.setMin(
-                        state.PreviuosEndFastingTime.hour, state.PreviuosEndFastingTime.minute.inc()
-                    )
-                } else {
-                    mTimePickerDialog.setMax(25, 25)
-
-                }
-
-                mTimePickerDialog.show()
-            },
-            mYear,
-            mMonth,
-            mDay
-        )
-
-        if (state.NewUser) {
-
-            mDatePickerDialog.getDatePicker().setMinDate(date1);
-            mDatePickerDialog.getDatePicker().setMaxDate(date);
-        } else {
-            val zonedDateTime3: ZonedDateTime =
-                ZonedDateTime.of(state.PreviuosEndFastingTime, ZoneId.systemDefault())
-            val date3: Long = zonedDateTime3.toInstant().toEpochMilli()
-            mDatePickerDialog.getDatePicker().setMinDate(date3);
-            mDatePickerDialog.getDatePicker().setMaxDate(date);
-
-        }
-        mDatePickerDialog.setTitle(stringResource(id = R.string.start_fasting))
-
-        mTimePickerDialog.setTitle(stringResource(id = R.string.start_fasting))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(PaddingValues(top = 8.dp)),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-
-                modifier = Modifier
-                    .width(90.dp)
-                    .height(30.dp),
-                textAlign = TextAlign.Center,
-                text = startFastingTime,
-                color = MaterialTheme.colors.primary,
-                fontSize = 20.sp
-            )
-            if (state.editVisiable) {
-                IconButton(modifier = Modifier.size(24.dp), onClick = {
-//                        mTimePickerDialog.show()
-                    mDatePickerDialog.show()
-                    onStartfastingClickButton
-                }) {
-                    Icon(
-                        Icons.Filled.Edit,
-                        "contentDescription",
-                    )
-                }
-            }
-        }
-
-
     }
 
 }
@@ -701,221 +511,20 @@ fun LastFastingEndTimeText(
     Endfastingtime: String,
     state: MainDataState,
     context: Context,
-    viewModel: MainActivityViewModel,
-    onEndfastingClickButton: () -> Unit
+    viewModel: MainActivityViewModel
 ) {
+    val showingFastingData = viewModel.getShowingFasting()
+
+    val pickingDateTime = CommonUtil.parseDateTime(showingFastingData.expectedEndFasting)!!
+    val minDateTime = CommonUtil.today().plusMinutes(1)
+    val pickerTitle = stringResource(id = R.string.end_fasting)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(PaddingValues(top = 8.dp)),
         horizontalArrangement = Arrangement.Center
     ) {
-        var dayofMonth by remember {
-            mutableStateOf(0)
-        }
-
-// Declaring and initializing a calendar
-        var mCalendar = Calendar.getInstance()
-        var mHour = remember {
-            mutableStateOf(mCalendar[Calendar.HOUR_OF_DAY])
-        }
-        var mMinute = remember {
-            mutableStateOf(mCalendar[Calendar.MINUTE])
-        }
-        val CurrentDateTime: LocalDateTime = LocalDateTime.now(ZoneId.systemDefault())
-        // Fetching current year, month and day
-        val mYear = mCalendar.get(Calendar.YEAR)
-        val mMonth = mCalendar[Calendar.MONTH]
-        val mDay = mCalendar[Calendar.DAY_OF_MONTH]
-        val CurrentDateTime1: LocalDateTime = LocalDateTime.now(ZoneId.systemDefault()).plusDays(-3)
-        val zonedDateTime: ZonedDateTime =
-            ZonedDateTime.of(state.startFastingTime, ZoneId.systemDefault())
-        val date: Long = zonedDateTime.toInstant().toEpochMilli()
-        val zonedDateTime1: ZonedDateTime =
-            ZonedDateTime.of(CurrentDateTime, ZoneId.systemDefault())
-        val date1: Long = zonedDateTime1.toInstant().toEpochMilli()
-        mCalendar.time = Date()
-        // Value for end time as a string
-        val mNewEndFastingTimeTime = remember {
-            mutableStateOf(Endfastingtime)
-        }
-        var MonthOfyear by remember {
-            mutableStateOf(0)
-        }
-        var year by remember {
-            mutableStateOf(0)
-        }
-        var mTimePickerDialog: RangeTimePickerDialog
-        val mDatePickerDialog: DatePickerDialog
-        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.P) {
-            // Creating a TimePicker dialod
-            mTimePickerDialog = RangeTimePickerDialog(
-                context, R.style.CustomDatePickerDialog1, { _, mHour: Int, mMinute: Int ->
-                    viewModel.updateTimeDataEndFasting(
-                        mHour, mMinute, dayofMonth, MonthOfyear, year
-                    )
-                    mNewEndFastingTimeTime.value = "$mHour:$mMinute"
-                }, mHour.value, mMinute.value, false
-            )
-
-
-            // initial values as current values (present year, month and day)
-            mDatePickerDialog = DatePickerDialog(
-                context,
-                R.style.CustomDatePickerDialog12,
-                { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
-                    dayofMonth = mDayOfMonth
-                    MonthOfyear = mMonth + 1
-                    year = mYear
-                    if (state.isUserOverFasting) {
-                        if ((dayofMonth - state.startFastingTime.dayOfMonth) == 0) {
-                            mTimePickerDialog.updateValue(
-                                state.startFastingTime.hour, state.startFastingTime.minute
-                            )
-
-                            mTimePickerDialog.setMin(
-                                state.startFastingTime.hour, state.startFastingTime.minute
-                            )
-                        } else {
-                            mTimePickerDialog.setMin(-1, -1)
-
-                        }
-
-                    } else {
-
-                        if (dayofMonth == state.startFastingTime.dayOfMonth) {
-
-                            mTimePickerDialog.updateValue(
-                                state.startFastingTime.hour, state.startFastingTime.minute
-                            )
-
-                            mTimePickerDialog.setMin(
-                                state.startFastingTime.hour, state.startFastingTime.minute
-                            )
-
-                        } else {
-
-                            mTimePickerDialog.setMin(-1, -1)
-                        }
-
-
-                    }
-                    mTimePickerDialog.show()
-                },
-                mYear,
-                mMonth,
-                mDay
-
-            )
-            if (state.isUserOverFasting) {
-
-                mDatePickerDialog.datePicker.setMaxDate(date1)
-                mDatePickerDialog.getDatePicker().setMinDate(date);
-
-            } else {
-                val CurrentDateTime2: LocalDateTime =
-                    LocalDateTime.now(ZoneId.systemDefault()).plusDays(3)
-                val zonedDateTime1: ZonedDateTime =
-                    ZonedDateTime.of(CurrentDateTime2, ZoneId.systemDefault())
-                val date2: Long = zonedDateTime1.toInstant().toEpochMilli()
-                val zonedDateTime3: ZonedDateTime =
-                    ZonedDateTime.of(state.startFastingTime, ZoneId.systemDefault())
-                val date3: Long = zonedDateTime3.toInstant().toEpochMilli()
-                mDatePickerDialog.getDatePicker().setMinDate(date3);
-                mDatePickerDialog.getDatePicker().setMaxDate(date2);
-
-
-            }
-
-            mDatePickerDialog.setTitle(stringResource(id = R.string.end_fasting))
-            mTimePickerDialog.setTitle(stringResource(id = R.string.end_fasting))
-
-
-        } else {
-
-            // Creating a TimePicker dialod
-            mTimePickerDialog = RangeTimePickerDialog(
-                context, R.style.CustomDatePickerDialog, { _, mHour: Int, mMinute: Int ->
-                    viewModel.updateTimeDataEndFasting(
-                        mHour, mMinute, dayofMonth, MonthOfyear, year
-                    )
-                    mNewEndFastingTimeTime.value = "$mHour:$mMinute"
-                }, mHour.value, mMinute.value, false
-            )
-
-            // initial values as current values (present year, month and day)
-            mDatePickerDialog = DatePickerDialog(
-                context,
-                R.style.CustomDatePickerDialog,
-                { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
-                    dayofMonth = mDayOfMonth
-                    MonthOfyear = mMonth + 1
-                    year = mYear
-                    if (state.isUserOverFasting) {
-                        if ((dayofMonth - state.startFastingTime.dayOfMonth) == 0) {
-                            mTimePickerDialog.updateValue(
-                                state.startFastingTime.hour, state.startFastingTime.minute
-                            )
-
-                            mTimePickerDialog.setMin(
-                                state.startFastingTime.hour, state.startFastingTime.minute
-                            )
-                        } else {
-                            mTimePickerDialog.setMin(-1, -1)
-
-                        }
-
-                    } else {
-
-                        if (dayofMonth == state.startFastingTime.dayOfMonth) {
-
-                            mTimePickerDialog.updateValue(
-                                state.startFastingTime.hour, state.startFastingTime.minute
-                            )
-
-                            mTimePickerDialog.setMin(
-                                state.startFastingTime.hour, state.startFastingTime.minute
-                            )
-
-                        } else {
-
-                            mTimePickerDialog.setMin(-1, -1)
-                        }
-
-
-                    }
-
-                    mTimePickerDialog.show()
-                },
-                mYear,
-                mMonth,
-                mDay
-
-            )
-
-            if (state.isUserOverFasting) {
-                mDatePickerDialog.datePicker.setMaxDate(date1)
-                mDatePickerDialog.getDatePicker().setMinDate(date);
-
-            } else {
-                val CurrentDateTime2: LocalDateTime =
-                    LocalDateTime.now(ZoneId.systemDefault()).plusDays(3)
-                val zonedDateTime1: ZonedDateTime =
-                    ZonedDateTime.of(CurrentDateTime2, ZoneId.systemDefault())
-                val date2: Long = zonedDateTime1.toInstant().toEpochMilli()
-                val zonedDateTime3: ZonedDateTime =
-                    ZonedDateTime.of(state.startFastingTime, ZoneId.systemDefault())
-                val date3: Long = zonedDateTime3.toInstant().toEpochMilli()
-                mDatePickerDialog.getDatePicker().setMinDate(date3);
-                mDatePickerDialog.getDatePicker().setMaxDate(date2);
-
-
-            }
-            mDatePickerDialog.setTitle(stringResource(id = R.string.end_fasting))
-            mTimePickerDialog.setTitle(stringResource(id = R.string.end_fasting))
-
-        }
-
         Text(
 
             modifier = Modifier
@@ -928,9 +537,14 @@ fun LastFastingEndTimeText(
         )
         if (state.editVisiable) {
             IconButton(modifier = Modifier.size(24.dp), onClick = {
-//                    mTimePickerDialog.show()
-                mDatePickerDialog.show()
-                onEndfastingClickButton
+                DateTimePickerDialog.Builder(context, pickingDateTime)
+                    .title(pickerTitle)
+                    .minDate(minDateTime)
+                    .onPickComplete { res ->
+                        viewModel.updateTimeDataEndFasting(
+                            CommonUtil.dateTimeToISOString(res)
+                        )
+                    }.show()
             }) {
                 Icon(
                     Icons.Filled.Edit,
