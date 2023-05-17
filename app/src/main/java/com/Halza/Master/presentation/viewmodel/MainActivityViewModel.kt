@@ -14,6 +14,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.wear.remote.interactions.RemoteActivityHelper
 import com.Halza.Master.R
+import com.Halza.Master.presentation.customcomponent.DateTimePickerDialog
 import com.Halza.Master.presentation.utils.MainDataState
 import com.Halza.Master.presentation.model.*
 import com.Halza.Master.presentation.service.IntermittentFastingRepository
@@ -119,6 +120,9 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             }
         }
     }
+
+    fun getShowingFasting(): FastingData = prefService.getShowingFasting()
+    fun getPreviousFasting(): FastingData? = prefService.getPreviousFasting()
 
     private fun changeShowingFastingData(data: FastingData): Unit {
         prefService.saveShowingFasting(data)
@@ -350,37 +354,21 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     }
 
     /*  //Update the start Time to (Edit start fasting Time)*/
-    fun updateTimeDataStartFasting(
-        hour: Int, minut: Int, dayOfMonth: Int, monthofyear: Int, year: Int
-    ) {
+    fun updateTimeDataStartFasting(newStartFasting: String) {
         viewModelScope.launch {
             try {
-
-                val CurrentDateTime: LocalDateTime = LocalDateTime.of(
-                    year, monthofyear, dayOfMonth, hour, minut
-                )// implementation details
-
-
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-                formatter.withZone(ZoneId.of("UTC"))
-                val zoneId: ZoneId = ZoneId.systemDefault() //Zone information
-                val zdtAtAsia: ZonedDateTime =
-                    CurrentDateTime.atZone(zoneId) //Local time in Asia timezone
-                val zdtAtET = zdtAtAsia.withZoneSameInstant(ZoneId.of("UTC"))
-                val formattedString = formatter.format(zdtAtET)
-
                 val expectedEndFasting = CommonUtil.plusHourToDateTimeString(
-                    formattedString, prefService.getShowingFasting().fastingHr.toLong()
+                    newStartFasting, prefService.getShowingFasting().fastingHr.toLong()
                 )
                 val bodyRequest = UpdateTimeDataRequest(
-                    newStartFasting = formattedString,
+                    newStartFasting = newStartFasting,
                     newExEndFasting = expectedEndFasting,
                     id = prefService.getShowingFasting().id
                 )
 
                 changeShowingFastingData(
                     prefService.getShowingFasting().copy(
-                        startFasting = formattedString,
+                        startFasting = newStartFasting,
                         expectedEndFasting = expectedEndFasting
                     )
                 )
@@ -394,39 +382,23 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     getCurrentIntermettantEndFastingUserData(MyNodeId.value.toString())
                 }
             } catch (e: Exception) {
-
                 errorMessage = e.message.toString()
-
             }
         }
 
     }
 
     /*Update the End Time to (Edit End fasting Time)*/
-    fun updateTimeDataEndFasting(
-        hour: Int, minut: Int, dayofMonth: Int, monthofyear: Int, year: Int
-    ) {
+    fun updateTimeDataEndFasting(newExpectedEndFasting: String) {
         viewModelScope.launch {
             try {
-
-                val CurrentDateTime: LocalDateTime = LocalDateTime.of(
-                    year, monthofyear, dayofMonth, hour, minut
-                )// implementation details
-
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-                formatter.withZone(ZoneId.of("UTC"))
-                val zoneId: ZoneId = ZoneId.systemDefault() //Zone information
-                val zdtAtAsia: ZonedDateTime =
-                    CurrentDateTime.atZone(zoneId) //Local time in Asia timezone
-                val zdtAtET = zdtAtAsia.withZoneSameInstant(ZoneId.of("UTC"))
-                val formattedString = formatter.format(zdtAtET)
                 val bodyRequest = UpdateTimeDataRequest(
-                    newExEndFasting = formattedString,
+                    newExEndFasting = newExpectedEndFasting,
                     id = prefService.getShowingFasting().id
                 )
 
                 changeShowingFastingData(
-                    prefService.getShowingFasting().copy(expectedEndFasting = formattedString)
+                    prefService.getShowingFasting().copy(expectedEndFasting = newExpectedEndFasting)
                 )
 
                 val response = repository.updateTimeData(
@@ -438,9 +410,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
                 }
             } catch (e: Exception) {
-
                 errorMessage = e.message.toString()
-
             }
         }
 

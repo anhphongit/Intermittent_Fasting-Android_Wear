@@ -2,11 +2,14 @@ package com.Halza.Master.presentation.utils
 
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 class CommonUtil {
     companion object {
         val dateTimePattern = DateTimeFormatter.ISO_DATE_TIME
+
+        fun today() = LocalDateTime.now(ZoneId.of("UTC"))
 
         fun parseDateTime(
             dateStr: String,
@@ -49,9 +52,23 @@ class CommonUtil {
         fun plusHourToDateTimeString(dtStr: String, hour: Long): String {
             val dt = parseDateTime(dtStr)
             val dtAfterPlus = dt?.plusHours(hour)
-            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-
-            return dtAfterPlus?.format(formatter) ?: ""
+            return dateTimeToISOString((dtAfterPlus))
         }
+
+        fun dateTimeToISOString(dt: LocalDateTime?): String {
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+            return dt?.format(formatter) ?: ""
+        }
+
+        fun dateTimeAtSystemTimeZone(dt: LocalDateTime): ZonedDateTime {
+            val utcZonedDateTime = dt.atZone(ZoneId.of("UTC"))
+            return utcZonedDateTime.withZoneSameInstant(ZoneId.systemDefault())
+        }
+
+        fun startOfDate(dt: LocalDateTime): LocalDateTime =
+            LocalDateTime.of(dt.year, dt.monthValue, dt.dayOfMonth, 0, 0)
+
+        fun endOfDate(dt: LocalDateTime): LocalDateTime =
+            LocalDateTime.of(dt.year, dt.monthValue, dt.dayOfMonth, 23, 59)
     }
 }
