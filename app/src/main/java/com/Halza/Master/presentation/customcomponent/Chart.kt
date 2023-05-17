@@ -135,7 +135,7 @@ fun Chart(
                     //--------------------(draw bars)--------------------//
                     drawRoundRect(
                         color =
-                        if (item.value== target)
+                        if (item.value >= target)
                             barColor
                         else Color(0xFF4E4E4E),
 

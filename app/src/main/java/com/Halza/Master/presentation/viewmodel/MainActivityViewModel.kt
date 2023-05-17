@@ -565,8 +565,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 val chartDate: String =
                     startFastingDateTimeDatTime.dayOfMonth.toString()//Get the date Day of the Date
                 val ss = data.calculatedFastingDuration.toFloat()
-                state.value.fastingHistoryDataList[chartDate] =
-                    ss//Fill the list wuth Value to Chart
+                state.value.fastingHistoryDataList[chartDate] = state.value.fastingHistoryDataList[chartDate]!! + ss//Fill the list wuth Value to Chart
 
             }
 
