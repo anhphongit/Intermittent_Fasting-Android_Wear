@@ -1,9 +1,11 @@
 package com.Halza.Master.presentation.utils
 
+import androidx.compose.ui.text.toLowerCase
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class CommonUtil {
     companion object {
@@ -70,5 +72,9 @@ class CommonUtil {
 
         fun endOfDate(dt: LocalDateTime): LocalDateTime =
             LocalDateTime.of(dt.year, dt.monthValue, dt.dayOfMonth, 23, 59)
+
+        fun detectNullString(str: String?) : Boolean {
+            return str == null || str.lowercase(Locale.ROOT) == "null"
+        }
     }
 }

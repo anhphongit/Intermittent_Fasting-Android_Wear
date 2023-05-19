@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
+import android.util.Log
 import androidx.core.content.ContextCompat.getSystemService
 
 class NetworkUtil {
@@ -51,6 +52,7 @@ class NetworkUtil {
             if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
                 || networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
                 || networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+                || networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH)
             ) {
                 return NetworkType.Wifi
             }

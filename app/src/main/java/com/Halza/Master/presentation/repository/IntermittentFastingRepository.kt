@@ -9,8 +9,6 @@ import com.Halza.Master.presentation.model.UpdateTimeDataRequest
 import com.Halza.Master.presentation.utils.CommonUtil
 import retrofit2.Response
 import java.lang.Exception
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 class IntermittentFastingRepository(private val mContext: Context) {
     private val prefService = SharedPreferencesService(mContext)
@@ -75,12 +73,16 @@ class IntermittentFastingRepository(private val mContext: Context) {
         }
     }
 
-    suspend fun startFasting(body: StartFastingRequestBody, nodeId: String): Response<Void> {
+    suspend fun startFasting(
+        body: StartFastingRequestBody,
+        nodeId: String,
+        tmpShowingFasting: FastingData
+    ): Response<Void> {
         return try {
             apiService.StartFasting(body, nodeId)
         } catch (e: Exception) {
-            val newFasting = generateNewFasting(body.startFasting, prefService.getShowingFasting())
-            saveOutOfDateFasting(newFasting, prefService.getShowingFasting())
+            val newFasting = generateNewFasting(body.startFasting, tmpShowingFasting)
+            saveOutOfDateFasting(newFasting, tmpShowingFasting)
 
             Response.success(null)
         }
@@ -133,14 +135,16 @@ class IntermittentFastingRepository(private val mContext: Context) {
     ): FastingData? {
         val previousFasting = apiService.GetPreviousFastingPlan(nodeId).body()?.prvsFasting
         val outOfFastingData = prefService.getOutOfSyncFasting()
-        var handlingPreviousFasting: FastingData? = previousFasting?.copy() ?: return null
+        var handlingPreviousFasting: FastingData? = previousFasting?.copy()
+
+        if (handlingPreviousFasting == null) return null
 
         for ((date, fastingData) in outOfFastingData) {
             if (CommonUtil.compareDateTime(
                     fastingData.startFasting ?: date, handlingPreviousFasting!!.endFasting
                 ) == 1
             ) {
-                if (handlingPreviousFasting.id == previousFasting.id && fastingData.id != "") {
+                if (handlingPreviousFasting.id == previousFasting!!.id && fastingData.id != "") {
                     val updateTimeDataRes = apiService.updateTimeData(
                         UpdateTimeDataRequest(
                             newStartFasting = fastingData.startFasting ?: "",

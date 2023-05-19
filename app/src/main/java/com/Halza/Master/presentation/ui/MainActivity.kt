@@ -7,6 +7,7 @@
 package com.Halza.Master.presentation.ui
 
 import android.content.Context
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -38,7 +39,7 @@ class MainActivity : ComponentActivity() {
             editor.putString(AppConstatnt.NODE_ID, nodeId)
             editor.commit()
             //Get Current Data For user
-            viewModel.getCurrentIntermettantEndFastingUserData(nodeId)
+            viewModel.startFetchingData()
         }
         setContent {//set-up the UI
             val state: MainDataState by viewModel.state.collectAsState()

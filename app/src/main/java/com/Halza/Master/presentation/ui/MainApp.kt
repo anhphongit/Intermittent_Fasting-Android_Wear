@@ -6,6 +6,7 @@ import android.app.DatePickerDialog
 import android.content.Context
 import android.content.res.Resources
 import android.os.Build
+import android.util.Log
 import android.widget.DatePicker
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.*
@@ -21,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -28,6 +30,8 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.wear.compose.material.*
 import com.Halza.Master.BuildConfig
 
@@ -42,7 +46,9 @@ import com.Halza.Master.presentation.customcomponent.DateTimePickerDialog
 import com.Halza.Master.presentation.customcomponent.GlobalDialogProvider
 import com.Halza.Master.presentation.customcomponent.LostNetworkDialog
 import com.Halza.Master.presentation.customcomponent.RangeTimePickerDialog
+import com.Halza.Master.presentation.utils.AppConstatnt
 import com.Halza.Master.presentation.utils.CommonUtil
+import com.Halza.Master.presentation.utils.Debounce
 import com.Halza.Master.presentation.utils.GlobalDialogUtil
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -73,6 +79,7 @@ fun MainApp(
         val iconModifier = Modifier
             .wrapContentSize(align = Alignment.Center)
             .fillMaxWidth(1f)
+        val lifecycleOwner = LocalLifecycleOwner.current
 
         var TargetValueProgress: Float = state.Progress
 
@@ -92,7 +99,11 @@ fun MainApp(
 
             ) {
 
-
+            LaunchedEffect(Unit) {
+                lifecycleOwner.lifecycle.repeatOnLifecycle(state = Lifecycle.State.RESUMED) {
+                    listState.scrollToItem(index = 0)
+                }
+            }
             GlobalDialogProvider(
                 modifier = Modifier.fillMaxSize(1f),
                 viewModel = GlobalDialogUtil.getInstance().getViewModel()
@@ -110,6 +121,12 @@ fun MainApp(
 
                         item {
                             Box(modifier = Modifier.fillParentMaxSize()) {
+                                LaunchedEffect(listState.centerItemScrollOffset) {
+                                    viewModel.scrollToFetchDataDebounce.doAction {
+                                        viewModel.startFetchingData()
+                                    }
+                                }
+
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth(1f)
@@ -179,7 +196,14 @@ fun MainApp(
                         }
                     }
                     //if user not connected with halza App
-                    else {
+                    if (!state.userHasConnected) {
+                        item {
+                            LaunchedEffect(Unit) {
+                                lifecycleOwner.lifecycle.repeatOnLifecycle(state = Lifecycle.State.RESUMED) {
+                                    viewModel.startFetchingData(AppConstatnt.NOT_CONNECTED_USER_FETCH_DATA_PERIOD)
+                                }
+                            }
+                        }
                         item {
                             Box(modifier = Modifier.fillParentMaxSize()) {
 
@@ -199,16 +223,6 @@ fun MainApp(
                         }
 
 
-                    }
-
-
-
-
-
-
-                    coroutineScope.launch {
-                        // Animate scroll to the 10th item
-                        listState.scrollToItem(index = 0)
                     }
                 }
 
@@ -231,7 +245,7 @@ fun ShowChart(
             .fillMaxWidth()
             .padding(
                 PaddingValues(
-                    top = 20.dp, start = 0.dp, end = 10.dp, bottom = 10.dp
+                    top = 20.dp, start = 0.dp, end = 0.dp, bottom = 10.dp
                 )
             )
     ) {
@@ -635,16 +649,12 @@ fun ShowBigProgress(
 
         )
     LaunchedEffect(key1 = indicatorProgress) {
-
-
         progress = indicatorProgress
-
     }
 
     // This is to start the animation when the activity is opened
     LaunchedEffect(key1 = indicatorProgress) {
         dataUsageRemember = progress * 100
-
     }
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -706,17 +716,11 @@ fun ShowBigProgress(
 
 
         LaunchedEffect(key1 = state.nextFastingTime) {
-
-
             FastingText = state.nextFastingTime
-
         }
 
         LaunchedEffect(key1 = state.fastingPeriod) {
-
-
             totalTimeFasting = state.fastingPeriod
-
         }
     }
 

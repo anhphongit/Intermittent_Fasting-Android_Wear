@@ -14,7 +14,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.wear.remote.interactions.RemoteActivityHelper
 import com.Halza.Master.R
-import com.Halza.Master.presentation.customcomponent.DateTimePickerDialog
 import com.Halza.Master.presentation.utils.MainDataState
 import com.Halza.Master.presentation.model.*
 import com.Halza.Master.presentation.service.IntermittentFastingRepository
@@ -83,6 +82,11 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     //Prefs service
     private val prefService = SharedPreferencesService(context);
 
+    private var fetchDataTimer = Timer()
+    private var fetchDataTimerTask: TimerTask? = null
+    private val fetchDataDebounce = Debounce(AppConstatnt.FETCH_DATA_DEBOUNCE_DELAY)
+    val scrollToFetchDataDebounce = Debounce(AppConstatnt.SCROLL_TO_FETCH_DATA_DEBOUNCE_DELAY)
+
     fun init() {
         val storedShowingFasting = prefService.getShowingFasting()
         val storedPreviousFasting = prefService.getPreviousFasting()
@@ -112,8 +116,6 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     fun registerNetworkListener() {
         NetworkUtil.registerNetworkChange(context) { isAvailable, type ->
             run {
-                Log.d("AnhPhong", "Network changed: isAvailable: $isAvailable, type: $type")
-
                 if (!isAvailable) {
                     GlobalDialogUtil.getInstance().showLostNetworkDialog()
                 }
@@ -131,30 +133,44 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         )
     }
 
-    //Get Current Data (Records) Cycle /Fasting For User
-    fun getCurrentIntermettantEndFastingUserData(nodeId: String) {
-        viewModelScope.launch {
-            try {
-                val response1 = repository.getCurrentFastingPlan(nodeId)
-                if (response1.code() == 200) {//user connected and have plan it will show fasting in progress
-                    val response = response1.body() as FastingData
+    fun startFetchingData(fetchPeriod: Long = AppConstatnt.FETCH_DATA_PERIOD) {
+        fetchDataDebounce.doAction {
+            fetchDataTimerTask?.cancel()
+            fetchDataTimerTask = object : TimerTask() {
+                override fun run() {
+                    val nodeId = MyNodeId.value.toString()
 
-                    changeShowingFastingData(response)
-                    getFastingHistory()
-                    GetPreviuosIntermedateFastingData(nodeId)
-                    checkToSyncData(nodeId, response)
-                } else if (response1.code() == 404) {//user not connected his watch with halza app
-                    _state.value = state.value.copy(userHasConnected = false)
-                } else if (response1.code() == 204) {//user is connected with the halza app but doesn't have any plan yet
-                    _state.value = state.value.copy(NewUser = true)
-                    changeShowingFastingData(FastingData())
+                    if (nodeId != "") {
+                        viewModelScope.launch {
+                            try {
+                                val response1 = repository.getCurrentFastingPlan(nodeId)
+                                if (response1.code() == 200) {//user connected and have plan it will show fasting in progress
+                                    val response = response1.body() as FastingData
+
+                                    changeShowingFastingData(response)
+                                    getFastingHistory()
+                                    GetPreviuosIntermedateFastingData(nodeId)
+                                    checkToSyncData(nodeId, response)
+
+                                    _state.value = state.value.copy(userHasConnected = true)
+                                } else if (response1.code() == 404) {//user not connected his watch with halza app
+                                    _state.value = state.value.copy(userHasConnected = false)
+                                } else if (response1.code() == 204) {//user is connected with the halza app but doesn't have any plan yet
+                                    _state.value = state.value.copy(NewUser = true)
+                                    changeShowingFastingData(FastingData())
+                                }
+
+                            } catch (e: Exception) {
+                                errorMessage = e.message.toString()
+                                changeShowingFastingData(prefService.getShowingFasting())
+                                renderHistoryFastingStatistic(prefService.getHistoryFasting())
+                            }
+                        }
+                    }
                 }
-
-            } catch (e: Exception) {
-                errorMessage = e.message.toString()
-                changeShowingFastingData(prefService.getShowingFasting())
-                renderHistoryFastingStatistic(prefService.getHistoryFasting())
             }
+
+            fetchDataTimer.schedule(fetchDataTimerTask, 0L, fetchPeriod)
         }
     }
 
@@ -165,8 +181,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     repository.checkIfHasUpdateSinceTheLastTimeConnect(fetchedCurrentFastingData)
                 val hasOutOfDateData = repository.checkIfHasOutDateData()
                 val syncCompleted: () -> Unit = {
-                    getCurrentIntermettantEndFastingUserData(nodeId)
-                    Log.d("AnhPhong", "Sync completed")
+                    startFetchingData()
                 }
                 var lastFasting: FastingData? = fetchedCurrentFastingData
 
@@ -257,7 +272,6 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         endFastingTime: String?,
     ) {
         try {
-            endStopWtach() // End Stop Watch to get updated Data
             _state.value =
                 MainDataState()//New MainState to get updaeted data to update UI everytime calling the APi
             _state.value = state.value.copy(
@@ -308,6 +322,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     var timeInHHMMSS = java.lang.String.format(
                         "%02d:%02d", hours, minutes
                     )/*convert to string to update UI*/
+
                     _state.value = state.value.copy(fastingPeriod = timeInHHMMSS)/*update UI*/
                     _state.value = state.value.copy(Percntage = Percntage.toFloat())/*update UI*/
                     var progressValue: Double = (Percntage / 100).toDouble()/*update UI*/
@@ -362,7 +377,6 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 )
                 val bodyRequest = UpdateTimeDataRequest(
                     newStartFasting = newStartFasting,
-                    newExEndFasting = expectedEndFasting,
                     id = prefService.getShowingFasting().id
                 )
 
@@ -377,9 +391,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     bodyRequest, MyNodeId.value.toString()
                 )
                 if (response.isSuccessful) {
-                    endStopWtach()
                     _state.value = MainDataState()
-                    getCurrentIntermettantEndFastingUserData(MyNodeId.value.toString())
+                    startFetchingData()
                 }
             } catch (e: Exception) {
                 errorMessage = e.message.toString()
@@ -406,7 +419,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 )
                 if (response.isSuccessful) {
                     _state.value = MainDataState()
-                    getCurrentIntermettantEndFastingUserData(MyNodeId.value.toString())
+                    startFetchingData()
 
                 }
             } catch (e: Exception) {
@@ -436,13 +449,15 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 state.value.nextFastingTime = context.resources.getString(R.string.fasting_txt)
                 state.value.startEndText = context.resources.getString(R.string.end_txt)
                 getCurrentFastingStartTime(formattedString)
+                val tmpShowingFasting = prefService.getShowingFasting().copy()
 
                 changeShowingFastingData(
                     repository.generateNewFasting(formattedString, prefService.getShowingFasting())
                 )
 
                 val response = repository.startFasting(
-                    bodyRequest, MyNodeId.value.toString()
+                    bodyRequest, MyNodeId.value.toString(),
+                    tmpShowingFasting
                 )//Call Start Fasting Api
                 if (response.isSuccessful) {
                     _state.value = state.value.copy(showingPercntage = false)//Remove Percntage
@@ -464,7 +479,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                         context.resources.getString(R.string.fasting_txt)/*Update UI to Fasting*/
 
                     getCurrentIntermettantExpectedEndFasting(MyNodeId.value.toString())/*Get Expected End Fasting*/
-                    getCurrentIntermettantEndFastingUserData(MyNodeId.value.toString())
+                    startFetchingData()
                 } else {//In Case Erro From API
                     _state.value = state.value.copy(fastingPeriod = "00" + ":00")
 
@@ -495,11 +510,10 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                 formatter.withZone(ZoneId.of("UTC"))
                 val formattedString: String =
                     CurrentDateTime.format(formatter)//Convert the time to String
-                endStopWtach()//Stop the Timer
-//                endCountDwonTimer()//Stop Count Down
                 val bodyRequest =
                     EndFastingRequestBody(endFasting = formattedString)//Body Request for End Fasting Call
 
+                endStopWtach()//Stop the Timer
                 changeShowingFastingData(
                     prefService.getShowingFasting().copy(endFasting = formattedString)
                 )
@@ -515,7 +529,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
                     _state.value = state.value.copy(fastingPeriod = "00" + ":00") //Update UI For 0
                     _state.value = state.value.copy(Progress = 0.0f)//UPdate Progress
 
-                    getCurrentIntermettantEndFastingUserData(MyNodeId.value.toString())
+                    startFetchingData()
                 } else {//In Case Error From Call
 
                     _state.value = state.value.copy(fastingPeriod = "00" + ":00")
@@ -546,26 +560,31 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     }
 
     private fun renderHistoryFastingStatistic(hfData: List<FastingData>) {
-        val todayDate: LocalDate = LocalDate.now()//Get Date For today To show 1 week
-        val weekBeforeDate: LocalDate =
-            LocalDate.now().plusDays(-7)//Get Date Before 8 Days to show 1 Week
-        val weekDates: List<LocalDate> = getWeekDate(weekBeforeDate, todayDate)
+        val today = CommonUtil.today()
+        val sevenDaysAgo = today.plusDays(-7)
+        val weekDates: List<LocalDateTime> = getWeekDate(sevenDaysAgo, today)
+
         state.value.fastingHistoryDataList.clear()// clear the List of Data
         for (date in weekDates) {//add dates for the list
-            state.value.fastingHistoryDataList[date.dayOfMonth.toString()] = 0f
+            val dataAtSystemZone = CommonUtil.dateTimeAtSystemTimeZone(date)
+            val dateTitleInChart = dataAtSystemZone.dayOfMonth.toString()
+            state.value.fastingHistoryDataList[dateTitleInChart] = 0f
         }
 
         UserHistoryDataList = hfData
 
         if (hfData.isNotEmpty()) {
             for (data in hfData) {
-                val formatter = DateTimeFormatter.ISO_DATE_TIME
-                val startFastingDateTimeDatTime: LocalDateTime =
-                    LocalDateTime.parse(data.startFasting, formatter)
+                val startFastingDate = CommonUtil.parseDateTime(data.startFasting)
+                val startFastingAtSystemZone =
+                    CommonUtil.dateTimeAtSystemTimeZone(startFastingDate!!)
                 val chartDate: String =
-                    startFastingDateTimeDatTime.dayOfMonth.toString()//Get the date Day of the Date
+                    startFastingAtSystemZone.dayOfMonth.toString()//Get the date Day of the Date
+
                 val ss = data.calculatedFastingDuration.toFloat()
-                state.value.fastingHistoryDataList[chartDate] = state.value.fastingHistoryDataList[chartDate]!! + ss//Fill the list wuth Value to Chart
+                state.value.fastingHistoryDataList[chartDate] =
+                    (state.value.fastingHistoryDataList[chartDate]
+                        ?: 0f) + ss//Fill the list wuth Value to Chart
 
             }
 
@@ -574,6 +593,9 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
 
     /*Stop Watch For Timer Count Up by adding 1 sec */
     private fun stopwatch(duration: Long) {
+        timertask?.cancel()
+        timer.cancel()
+
         var num: Long = duration
         timer = Timer()
         timertask = object : TimerTask() {
@@ -742,13 +764,12 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     }
 
     /*Get Dates For One Week*/
-    fun getWeekDate(startDate: LocalDate, endDate: LocalDate): List<LocalDate> {
-
-        var date = startDate
-        val list = mutableListOf<LocalDate>()
-        while (date <= endDate) {
-            list.add(date)
-            date += Period.ofDays(1)
+    fun getWeekDate(startDate: LocalDateTime, endDate: LocalDateTime): List<LocalDateTime> {
+        var tmpDate = startDate
+        val list = mutableListOf<LocalDateTime>()
+        while (CommonUtil.compareDateTime(tmpDate, endDate) != 1) {
+            list.add(tmpDate)
+            tmpDate = tmpDate.plusDays(1)
         }
 
         return list

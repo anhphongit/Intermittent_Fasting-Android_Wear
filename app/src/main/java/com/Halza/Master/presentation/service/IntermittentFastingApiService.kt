@@ -57,8 +57,8 @@ interface IntermittentFastingApiService {
                 //Build HttpCLient  For Retrofit Service
                 val client: OkHttpClient =
                     OkHttpClient.Builder().addInterceptor(HeaderInterceptor())
-                        .connectTimeout(100, TimeUnit.SECONDS)
-                        .readTimeout(100, TimeUnit.SECONDS).build()
+                        .connectTimeout(30, TimeUnit.SECONDS)
+                        .readTimeout(30, TimeUnit.SECONDS).build()
                 /*Build Retrofit Service with Base URL*/
                 apiService = Retrofit.Builder()
                     .baseUrl(BuildConfig.BASE_URL).client(client)
